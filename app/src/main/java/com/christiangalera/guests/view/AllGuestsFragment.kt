@@ -4,38 +4,54 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import com.christiangalera.guests.databinding.FragmentHomeBinding
+import androidx.lifecycle.ViewTreeLifecycleOwner
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.christiangalera.guests.R
+import com.christiangalera.guests.databinding.FragmentAllGuestsBinding
+import com.christiangalera.guests.view.adapter.GuestAdapter
 import com.christiangalera.guests.viewmodel.AllGuestsViewModel
 
 class AllGuestsFragment : Fragment() {
 
-    private lateinit var homeViewModel: AllGuestsViewModel
-    private var _binding: FragmentHomeBinding? = null
+    private lateinit var allGuestsViewModel: AllGuestsViewModel
+    private val mAdapter: GuestAdapter = GuestAdapter()
+    private var _binding: FragmentAllGuestsBinding? = null
 
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+    override fun onCreateView( inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
-        homeViewModel =
-            ViewModelProvider(this).get(AllGuestsViewModel::class.java)
+        allGuestsViewModel = ViewModelProvider(this).get(AllGuestsViewModel::class.java)
 
-        _binding = FragmentHomeBinding.inflate(inflater, container, false)
+        _binding = FragmentAllGuestsBinding.inflate(inflater, container, false)
+
         val root: View = binding.root
 
-        val textView: TextView = binding.textHome
-        homeViewModel.text.observe(viewLifecycleOwner, Observer {
-            textView.text = it
-        })
+        // 1 - Obter a Recycler
+        val recycler = root.findViewById<RecyclerView>(R.id.recycler_all_guests)
+
+        // 2 - Definir um layout
+        recycler.layoutManager = LinearLayoutManager(context)
+
+        // 3- Definir um adapter
+        recycler.adapter = mAdapter
+
+        observer()
+        allGuestsViewModel.load()
+
         return root
+    }
+
+    private fun observer() {
+        allGuestsViewModel.guestList.observe(viewLifecycleOwner, Observer {
+            mAdapter.updateGuests(it)
+        })
     }
 
     override fun onDestroyView() {
